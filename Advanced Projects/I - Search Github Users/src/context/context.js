@@ -15,22 +15,36 @@ const GithubProvider = ({children}) => {
     const [followers, setFollowers] = useState(mockFollowers)
     // request loading
     const [requests, setRequests] = useState(0)
-    const [loading, setLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     // error
     const [error, setError] = useState({show:false, msg:''})
 
     const searchGithubUser = async(user)=>{
         toggleError()
-        // setLoading(true)
+        setIsLoading(true)
         const response = await axios(`${rootUrl}/users/${user}`)
         .catch((err)=>console.log(err))
         if(response){
             setGithubUser(response.data)
             // more logic here
+            // repos
+            // https://api.github.com/users/john-smilga/repos?per_page=100
+            // followers
+            // https://api.github.com/users/john-smilga/followers
+            const {login, followers_url} = response.data
+            // repois
+            axios(`${rootUrl}/users/${login}/repos?per_page=100`)
+            .then(response => setRepos(response.data))
+            
+            // followers
+            axios(`${followers_url}?per_page=100`)
+            .then(response => setFollowers(response.data))
         }
         else{
             toggleError(true, 'the is no user with that username')
         }
+        checkRequest()
+        setIsLoading(false)
     }
     
     // check rate
@@ -57,7 +71,7 @@ const GithubProvider = ({children}) => {
     
 
     return (
-    <GithubContext.Provider value={{githubUser, repos, followers, requests, error, searchGithubUser}}>{children}</GithubContext.Provider>)
+    <GithubContext.Provider value={{githubUser, repos, followers, requests, error, searchGithubUser, isLoading}}>{children}</GithubContext.Provider>)
 }
 
 export {GithubProvider, GithubContext}
